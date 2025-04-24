@@ -1,0 +1,30 @@
+[Unit]
+Description=SELinux Immutable File Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/immutable_service
+Restart=on-failure
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=immutable-service
+
+# 安全加固
+ProtectSystem=strict
+PrivateDevices=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+NoNewPrivileges=true
+
+# SELinux 上下文
+SELinuxContext=system_u:system_r:immutable_service_t:s0
+
+[Install]
+WantedBy=multi-user.target 

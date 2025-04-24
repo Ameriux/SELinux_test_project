@@ -1,0 +1,49 @@
+# 定义新的安全上下文
+policy_module(immutable_test, 1.0)
+
+# 定义类型
+type immutable_file_t;        # 不可变文件类型
+type immutable_service_t;     # 特权服务进程域
+type immutable_service_exec_t;# 服务可执行文件类型
+type immutable_service_var_t; # 服务数据存储类型
+
+# 基本类型属性
+typeattribute immutable_file_t file_type;
+typeattribute immutable_service_t domain;
+
+# 系统初始化时设置服务域
+domain_auto_trans(init_t, immutable_service_exec_t, immutable_service_t);
+
+# 禁止从其他域转换到特权服务域
+neverallow { domain -init_t } immutable_service_t:process transition;
+
+# 允许特权服务进程读取、修改和删除不可变文件
+allow immutable_service_t immutable_file_t:file { getattr open read write append create unlink rename };
+allow immutable_service_t immutable_file_t:dir { getattr open read write add_name remove_name search };
+
+# 允许特权服务管理自己的数据
+allow immutable_service_t immutable_service_var_t:file { getattr open read write create append unlink };
+allow immutable_service_t immutable_service_var_t:dir { getattr open read write add_name remove_name search create rmdir };
+
+# 禁止所有非特权域修改不可变文件
+neverallow { domain -immutable_service_t } immutable_file_t:file { write append create unlink rename setattr };
+neverallow { domain -immutable_service_t } immutable_file_t:dir { write add_name remove_name rmdir create setattr };
+
+# 允许所有域读取不可变文件
+allow domain immutable_file_t:file { getattr open read };
+allow domain immutable_file_t:dir { getattr open read search };
+
+# 允许特权服务使用rsync进行增量更新
+allow immutable_service_t rsync_exec_t:file { getattr execute open read execute_no_trans };
+
+# 允许特权服务运行系统命令
+allow immutable_service_t bin_t:file { execute execute_no_trans };
+allow immutable_service_t shell_exec_t:file { execute execute_no_trans };
+
+# 允许特权服务进行网络通信和系统日志
+allow immutable_service_t self:unix_stream_socket { create connect write read };
+allow immutable_service_t syslogd_t:unix_stream_socket { connectto };
+
+# 审计规则
+auditallow { domain -immutable_service_t } immutable_file_t:file { write append create unlink rename };
+auditallow { domain -immutable_service_t } immutable_file_t:dir { write add_name remove_name create rmdir }; 
