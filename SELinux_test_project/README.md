@@ -28,7 +28,7 @@
 
 1. 克隆代码仓库：
    ```bash
-   git clone https://github.com/yourusername/SELinux_test_project.git
+   git clone https://github.com/Ameriux/SELinux_test_project.git
    cd SELinux_test_project
    ```
 
